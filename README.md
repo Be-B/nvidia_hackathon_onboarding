@@ -105,16 +105,34 @@ output/
 
 ## GPU 서버 (Brev) 에서 실행
 
+### 원클릭 셋업
+
+SSH 접속 후 아래 명령어만 실행하면 끝입니다:
+
 ```bash
-# 1. .env에서 로컬 모드로 전환
-NVIDIA_BASE_URL=http://localhost:5000/v1
+git clone https://github.com/Be-B/nvidia_hackathon_onboarding.git
+cd nvidia_hackathon_onboarding
+bash scripts/setup_brev.sh
+```
 
-# 2. vLLM으로 Nemotron 배포 (별도 터미널)
-bash scripts/launch_nemotron_nano.sh bf16    # 1x H100/A100
-bash scripts/launch_nemotron_super.sh fp8    # 2x H100
+이 스크립트가 자동으로 처리하는 것:
+1. uv 설치
+2. Python & 프로젝트 의존성 설치
+3. vLLM + CUDA 패키지 설치
+4. `.env` 파일 생성 (로컬 모드)
+5. GPU 확인
 
-# 3. 노트북 실행
-docker-compose up --build
+### 셋업 후 실행
+
+```bash
+# 1. API 키 입력
+nano .env
+
+# 2. 터미널 1: vLLM 실행
+bash scripts/launch_nemotron_nano.sh bf16
+
+# 3. 터미널 2: 노트북 실행
+uv run jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
 ```
 
 ### GPU 요구사항
