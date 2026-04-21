@@ -3,57 +3,54 @@
 Nemotron 해커톤 Track C를 위한 온보딩 프로젝트.
 NIM Chat API 기본 예제 + NeMo Data Designer로 한국어 수학 CoT 합성 데이터셋 생성 파이프라인.
 
-## Quick Start
+## Quick Start (Brev GPU 서버)
 
-### 1. 레포 클론 & 환경 설정
+모든 작업은 Brev GPU 서버에서 실행합니다.
 
 ```bash
+# 1. SSH 접속
+ssh <brev-서버>
+
+# 2. 클론 & 환경 설정
 git clone https://github.com/Be-B/nvidia_hackathon_onboarding.git
 cd nvidia_hackathon_onboarding
 cp .env.example .env
-# .env 파일을 열어 NVIDIA_API_KEY를 본인 키로 변경
+nano .env  # NVIDIA_API_KEY 입력
+
+# 3. 한 줄로 전부 실행 (vLLM + Jupyter + Curator)
+docker-compose up gpu
 ```
 
-### 2. 실행 방법 선택
+브라우저에서 `http://<brev-IP>:8888` 접속 → 노트북 실행.
 
-#### Option A: Docker (NeMo Curator 포함, 권장)
+### Docker Compose 서비스
 
-```bash
-docker-compose up --build
-```
+| 명령어 | 환경 | 포함 |
+|--------|------|------|
+| `docker-compose up gpu` | Brev (GPU) | vLLM + Jupyter + Data Designer + Curator |
+| `docker-compose up notebook` | 맥 (CPU) | Jupyter + Data Designer (Cloud API) |
 
-브라우저에서 `http://localhost:8888` 접속 → Jupyter Lab에서 노트북 실행.
-
-#### Option B: 로컬 (Mac/Linux, Curator 제외)
-
-```bash
-uv sync
-uv run jupyter lab
-```
-
-### 3. .env 설정
+## .env 설정
 
 ```bash
 NVIDIA_API_KEY=nvapi-xxxx...
 
-# Cloud API (맥/GPU 없는 환경)
+# Cloud API (맥에서 테스트용)
 NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 
-# 온프레미스 vLLM (GPU 서버) — 사용 시 위를 주석 처리
-# NVIDIA_BASE_URL=http://localhost:8000/v1
+# Brev GPU 서버 — docker-compose up gpu 시 자동 설정됨
+# 수동 실행 시: NVIDIA_BASE_URL=http://localhost:5000/v1
 ```
-
-`.env` 하나로 Cloud API ↔ 로컬 vLLM 전환 가능. 코드 수정 불필요.
 
 ## 프로젝트 구조
 
 ```
 .
 ├── .env.example                 # 환경변수 템플릿
-├── Dockerfile                   # Docker 이미지 (NeMo Curator 포함)
-├── docker-compose.yaml          # Docker Compose 설정
+├── Dockerfile                   # Docker 이미지 (CPU, 맥용)
+├── Dockerfile.gpu               # Docker 이미지 (GPU, Brev용)
+├── docker-compose.yaml          # Docker Compose (notebook / gpu / vllm)
 ├── pyproject.toml               # 의존성 (uv)
-├── README.md
 ├── HACKATHON_INFO.md            # 해커톤 심사 기준 & 제출물 정리
 │
 ├── 01_chat_completion.py        # NIM 기본: 단일턴 + 멀티턴 + 스트리밍
@@ -63,8 +60,9 @@ NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 │
 ├── data_designer_trackc.ipynb   # Track C 전체 파이프라인 (Step 0~7)
 └── scripts/
-    ├── launch_nemotron_super.sh # vLLM Nemotron 3 Super 실행
-    └── launch_nemotron_nano.sh  # vLLM Nemotron 3 Nano 실행
+    ├── launch_nemotron_super.sh # vLLM Nemotron 3 Super (수동 실행용)
+    ├── launch_nemotron_nano.sh  # vLLM Nemotron 3 Nano (수동 실행용)
+    └── setup_brev.sh            # Brev 원클릭 셋업 (Docker 없이 사용 시)
 ```
 
 ## 온보딩 순서
@@ -103,39 +101,25 @@ output/
 └── korean_math_cot_full.parquet   # 전체 데이터셋 (메타데이터 포함)
 ```
 
-## GPU 서버 (Brev) 에서 실행
+## 수동 실행 (Docker 없이)
 
-### 원클릭 셋업
-
-SSH 접속 후 아래 명령어만 실행하면 끝입니다:
+Docker 대신 직접 실행할 수도 있습니다:
 
 ```bash
-git clone https://github.com/Be-B/nvidia_hackathon_onboarding.git
-cd nvidia_hackathon_onboarding
+# Brev에서 원클릭 셋업
 bash scripts/setup_brev.sh
-```
 
-이 스크립트가 자동으로 처리하는 것:
-1. uv 설치
-2. Python & 프로젝트 의존성 설치
-3. vLLM + CUDA 패키지 설치
-4. `.env` 파일 생성 (로컬 모드)
-5. GPU 확인
-
-### 셋업 후 실행
-
-```bash
-# 1. API 키 입력
+# API 키 입력
 nano .env
 
-# 2. 터미널 1: vLLM 실행
+# 터미널 1: vLLM 실행
 bash scripts/launch_nemotron_nano.sh bf16
 
-# 3. 터미널 2: 노트북 실행
+# 터미널 2: 노트북 실행
 uv run jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
 ```
 
-### GPU 요구사항
+## GPU 요구사항
 
 | 모델 | 변형 | 필요 GPU |
 |------|------|----------|

@@ -1,4 +1,5 @@
 services:
+  # 맥/일반 환경: docker-compose up notebook
   notebook:
     build: .
     ports:
@@ -10,3 +11,59 @@ services:
       - .env
     environment:
       - NVIDIA_BASE_URL=${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
+
+  # Brev GPU 서버: docker-compose up gpu
+  gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/app
+      - ./output:/app/output
+    env_file:
+      - .env
+    environment:
+      - NVIDIA_BASE_URL=http://vllm:5000/v1
+    depends_on:
+      - vllm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # vLLM 서버 (Brev에서만 사용)
+  vllm:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    command: >
+      uv run python -m vllm.entrypoints.openai.api_server
+      --model nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
+      --dtype auto
+      --trust-remote-code
+      --served-model-name nemotron
+      --host 0.0.0.0
+      --port 5000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  huggingface_cache:
