@@ -1,0 +1,12 @@
+services:
+  notebook:
+    build: .
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/app
+      - ./output:/app/output
+    env_file:
+      - .env
+    environment:
+      - NVIDIA_BASE_URL=${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
