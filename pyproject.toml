@@ -1,0 +1,16 @@
+[project]
+name = "nim-onboarding"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "openai",
+    "python-dotenv",
+    "numpy",
+    "ipykernel",
+    "jupyterlab",
+    "data-designer",
+    "pandas",
+    "pyarrow",
+    "requests",
+    "nemo-curator",
+]
